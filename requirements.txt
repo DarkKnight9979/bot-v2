@@ -1,4 +1,4 @@
-git+https://github.com/StreamAlpha/tvdatafeed.git
+git+https://github.com/Math-A-Matics/tvdatafeed.git
 pandas
 pandas_ta
 python-telegram-bot
