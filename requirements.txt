@@ -8,4 +8,4 @@ pytz
 websocket-client
 urllib3
 gunicorn
-git+https://github.com/Math-A-Thon/tvdatafeed.txt.git
+tvdatafeed
