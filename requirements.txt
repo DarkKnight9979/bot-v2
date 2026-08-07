@@ -6,3 +6,4 @@ flask
 pytz
 websocket-client
 urllib3
+gunicorn
