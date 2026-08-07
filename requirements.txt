@@ -1,4 +1,5 @@
 pandas
+numpy
 ta
 python-telegram-bot
 requests
