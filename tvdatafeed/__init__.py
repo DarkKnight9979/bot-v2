@@ -1,13 +1,12 @@
-import pandas as pd
-import numpy as np
-from datetime import datetime
-import os
+from .main import TvDatafeed
 
-class TvDatafeed:
-    def __init__(self, username=None, password=None):
-        self.username = username
-        self.password = password
-
-    def get_hist(self, symbol, exchange='NASDAQ', interval=1, n_bars=100):
-        # Basic container structure for tvdatafeed functionality
-        return pd.DataFrame()
+class Interval:
+    in_1_minute = "1m"
+    in_5_minute = "5m"
+    in_15_minute = "15m"
+    in_30_minute = "30m"
+    in_1_hour = "1h"
+    in_4_hour = "4h"
+    in_daily = "1D"
+    in_weekly = "1W"
+    in_monthly = "1M"
