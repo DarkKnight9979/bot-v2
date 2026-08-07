@@ -1,0 +1,4 @@
+tvdatafeed
+pandas
+pandas_ta
+python-telegram-bot
