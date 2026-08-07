@@ -8,3 +8,4 @@ pytz
 websocket-client
 urllib3
 gunicorn
+yfinance
