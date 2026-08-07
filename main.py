@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
 from flask import Flask
 from tvdatafeed import TvDatafeed, Interval
-import pandas_ta as ta
+import ta
 from collections import defaultdict, deque
 
 # ============================================================
