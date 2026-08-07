@@ -3,3 +3,6 @@ ta
 python-telegram-bot
 requests
 flask
+pytz
+websocket-client
+urllib3
