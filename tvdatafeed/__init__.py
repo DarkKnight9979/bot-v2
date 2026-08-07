@@ -8,3 +8,9 @@ class Interval:
     in_daily = "1D"
     in_weekly = "1W"
     in_monthly = "1M"
+
+class TvDatafeed:
+    def __init__(self, username=None, password=None):
+        pass
+    def get_hist(self, *args, **kwargs):
+        return None
