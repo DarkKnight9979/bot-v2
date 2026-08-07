@@ -1,5 +1,3 @@
-from .main import TvDatafeed
-
 class Interval:
     in_1_minute = "1m"
     in_5_minute = "5m"
