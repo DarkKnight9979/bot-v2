@@ -13,7 +13,7 @@ import queue
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
 from flask import Flask
-from tvdatafeed import TvDatafeed, Interval
+from tvdatafeed import Interval
 import ta
 import ta as pandas_ta
 from collections import defaultdict, deque
