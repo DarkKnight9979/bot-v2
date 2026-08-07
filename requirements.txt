@@ -1,4 +1,3 @@
-https://github.com/StreamAlpha/tvdatafeed/archive/refs/heads/main.zip
 pandas
 pandas_ta
 python-telegram-bot
