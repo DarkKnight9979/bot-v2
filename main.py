@@ -15,6 +15,7 @@ from concurrent.futures import ThreadPoolExecutor
 from flask import Flask
 from tvdatafeed import TvDatafeed, Interval
 import ta
+import ta as pandas_ta
 from collections import defaultdict, deque
 
 # ============================================================
