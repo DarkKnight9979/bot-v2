@@ -4913,19 +4913,12 @@ def check_trade_results():
                 result_text = "ربح" if is_win else ("تعادل" if is_tie else "خسارة")
                 diff_val = fp - ep
                 diff_sign = "+" if diff_val >= 0 else ""
-                result_msg = (
-                    f"{result_emoji} *نتيجة الصفقة — {pair}*
-"
-                    f"الاتجاه: *{direction}* | الاستراتيجية: *{strategy}*
-"
-                    f"💰 *سعر الدخول:* `{ep:.5f}`
-"
-                    f"🏁 *سعر الخروج:* `{fp:.5f}`
-"
-                    f"📊 *الفرق:* `{diff_sign}{diff_val:.5f}` ({diff_sign}{diff_pct:.4f}%)
-"
-                    f"📈 *النتيجة:* *{result_text}*"
-                )
+                result_msg = f"""{result_emoji} *نتيجة الصفقة — {pair}*
+الاتجاه: *{direction}* | الاستراتيجية: *{strategy}*
+💰 *سعر الدخول:* `{ep:.5f}`
+🏁 *سعر الخروج:* `{fp:.5f}`
+📊 *الفرق:* `{diff_sign}{diff_val:.5f}` ({diff_sign}{diff_pct:.4f}%)
+📈 *النتيجة:* *{result_text}*"""
                 send_telegram_message(result_msg)
 
                 trades_to_remove.append(trade)
