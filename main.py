@@ -13,32 +13,8 @@ import queue
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
 from flask import Flask
-import pandas as pd
-class Interval:
-    in_1_minute = "1m"
-    in_5_minute = "5m"
-    in_15_minute = "15m"
-    in_30_minute = "30m"
-    in_1_hour = "1h"
-    in_4_hour = "4h"
-    in_daily = "1D"
-    in_weekly = "1W"
-    in_monthly = "1M"
-    in_1m = "1m"
-    in_5m = "5m"
-    in_15m = "15m"
-    in_30m = "30m"
-    in_1h = "1h"
-    in_4h = "4h"
-    in_1d = "1D"
-
-class TvDatafeed:
-    def __init__(self, username=None, password=None):
-        pass
-    def get_hist(self, symbol, exchange='FX_IDC', interval='1m', n_bars=100):
-        return pd.DataFrame()
-import ta
-import ta as pandas_ta
+from tvdatafeed import TvDatafeed, Interval
+import pandas_ta as ta
 from collections import defaultdict, deque
 
 # ============================================================
@@ -182,11 +158,11 @@ quantum_weights_history = []
 kalman_instances = {}
 
 # ========== CREDENTIALS & INITIALIZATION ==========
-TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN", "8594216315:aahfziqx-vu8zubdpsis1y8-wydho3t1kc8")
+TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN", "8794920089:AAFnRnoudkdPrlMtDaijlaQgczrTkaM0MU4")
 CHAT_ID = os.environ.get("CHAT_ID", "1462370563")
 
 # الاتصال بمكتبة TradingView
-tv = TvDatafeed()
+tv = TvDatafeed(username='demreyalexa@gmail.com', password='Mmdemreyalexa@gmail.com125')
 
 if not TELEGRAM_TOKEN or not CHAT_ID:
     raise ValueError("❌ TELEGRAM_TOKEN and CHAT_ID required!")
@@ -4643,23 +4619,44 @@ def get_cached_candles(pair, tf, count, max_age=30, force_refresh=False):
             return data
 
     try:
-        # MODIFIED: استخدام TradingView مباشرة بدلاً من IQ Option
+        # تحويل tf إلى Interval صحيح
+        if tf == 60:
+            interval = Interval.in_1_minute
+        elif tf == 300:
+            interval = Interval.in_5_minute
+        elif tf == 3600:
+            interval = Interval.in_1_hour
+        elif tf == 14400:
+            interval = Interval.in_4_hour
+        else:
+            interval = Interval.in_daily
+
+        # تجربة عدة exchanges لو OANDA فشلت
+        exchanges = ['OANDA', 'FOREXCOM', 'FX']
+        data = None
+
         with api_lock:
-            # استخدام tvdatafeed لجلب البيانات من TradingView
-            interval = Interval.in_1m if tf == 60 else Interval.in_5m if tf == 300 else Interval.in_1h if tf == 3600 else Interval.in_1d
-            data = tv.get_hist(symbol=pair, exchange='OANDA', interval=interval, n_bars=count)
+            for ex in exchanges:
+                try:
+                    data = tv.get_hist(symbol=pair, exchange=ex, interval=interval, n_bars=count)
+                    if data is not None and len(data) > 0:
+                        logger.info(f"✅ {pair}: جلبت {len(data)} شمعة من {ex}")
+                        break
+                except Exception as ex_err:
+                    logger.warning(f"⚠️ {pair}: فشل مع {ex} — {ex_err}")
+                    continue
+
         if data is not None and len(data) > 0:
-            # تحويل البيانات إلى نفس التنسيق المتوقع
             candles = []
             for idx, row in data.iterrows():
                 candle = {
                     'from': int(idx.timestamp()),
                     'to': int(idx.timestamp()) + tf,
-                    'open': row['open'],
-                    'max': row['high'],
-                    'min': row['low'],
-                    'close': row['close'],
-                    'volume': row['volume']
+                    'open': float(row['open']),
+                    'max': float(row['high']),
+                    'min': float(row['low']),
+                    'close': float(row['close']),
+                    'volume': float(row['volume']) if 'volume' in row else 0
                 }
                 candles.append(candle)
             if candles:
