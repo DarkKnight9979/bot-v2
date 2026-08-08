@@ -158,7 +158,7 @@ quantum_weights_history = []
 kalman_instances = {}
 
 # ========== CREDENTIALS & INITIALIZATION ==========
-TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN", "8794920089:AAFnRnoudkdPrlMtDaijlaQgczrTkaM0MU4")
+TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN", "8594216315:AAHFziQx-vu8zUbDpsIS1Y8-wYdHO3T1Kc8")
 CHAT_ID = os.environ.get("CHAT_ID", "1462370563")
 
 # yfinance لا يحتاج initialization — يعمل مباشرة
