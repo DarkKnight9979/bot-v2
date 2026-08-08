@@ -1,6 +1,7 @@
 pandas
 numpy
 ta
+pandas-ta
 python-telegram-bot
 requests
 flask
@@ -8,4 +9,4 @@ pytz
 websocket-client
 urllib3
 gunicorn
-yfinance
+tvdatafeed
