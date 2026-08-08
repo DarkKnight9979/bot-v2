@@ -13,8 +13,8 @@ import queue
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
 from flask import Flask
-from tvdatafeed import TvDatafeed, Interval
-import pandas_ta as ta
+import yfinance as yf
+import ta
 from collections import defaultdict, deque
 
 # ============================================================
@@ -161,8 +161,7 @@ kalman_instances = {}
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN", "8794920089:AAFnRnoudkdPrlMtDaijlaQgczrTkaM0MU4")
 CHAT_ID = os.environ.get("CHAT_ID", "1462370563")
 
-# الاتصال بمكتبة TradingView
-tv = TvDatafeed(username='demreyalexa@gmail.com', password='Mmdemreyalexa@gmail.com125')
+# yfinance لا يحتاج initialization — يعمل مباشرة
 
 if not TELEGRAM_TOKEN or not CHAT_ID:
     raise ValueError("❌ TELEGRAM_TOKEN and CHAT_ID required!")
@@ -4619,52 +4618,63 @@ def get_cached_candles(pair, tf, count, max_age=30, force_refresh=False):
             return data
 
     try:
-        # تحويل tf إلى Interval صحيح
-        if tf == 60:
-            interval = Interval.in_1_minute
-        elif tf == 300:
-            interval = Interval.in_5_minute
-        elif tf == 3600:
-            interval = Interval.in_1_hour
-        elif tf == 14400:
-            interval = Interval.in_4_hour
-        else:
-            interval = Interval.in_daily
+        # تحويل pair لصيغة yfinance
+        ticker = f"{pair}=X"
 
-        # تجربة عدة exchanges لو OANDA فشلت
-        exchanges = ['OANDA', 'FOREXCOM', 'FX']
-        data = None
+        # تحويل tf لصيغة yfinance
+        if tf == 60:
+            interval = "1m"
+            period = "1d"
+        elif tf == 300:
+            interval = "5m"
+            period = "5d"
+        elif tf == 3600:
+            interval = "1h"
+            period = "1mo"
+        elif tf == 14400:
+            interval = "1h"  # yfinance مش بيدعم 4h مباشرة — بنستخدم 1h
+            period = "1mo"
+        else:
+            interval = "1d"
+            period = "3mo"
 
         with api_lock:
-            for ex in exchanges:
-                try:
-                    data = tv.get_hist(symbol=pair, exchange=ex, interval=interval, n_bars=count)
-                    if data is not None and len(data) > 0:
-                        logger.info(f"✅ {pair}: جلبت {len(data)} شمعة من {ex}")
-                        break
-                except Exception as ex_err:
-                    logger.warning(f"⚠️ {pair}: فشل مع {ex} — {ex_err}")
-                    continue
+            data = yf.download(ticker, period=period, interval=interval, progress=False, threads=False)
 
         if data is not None and len(data) > 0:
             candles = []
             for idx, row in data.iterrows():
+                # yfinance بيرجع MultiIndex أحياناً
+                if isinstance(row.index, pd.MultiIndex):
+                    open_p = float(row['Open'].iloc[0]) if hasattr(row['Open'], 'iloc') else float(row['Open'])
+                    high_p = float(row['High'].iloc[0]) if hasattr(row['High'], 'iloc') else float(row['High'])
+                    low_p = float(row['Low'].iloc[0]) if hasattr(row['Low'], 'iloc') else float(row['Low'])
+                    close_p = float(row['Close'].iloc[0]) if hasattr(row['Close'], 'iloc') else float(row['Close'])
+                    vol = float(row['Volume'].iloc[0]) if hasattr(row['Volume'], 'iloc') else float(row['Volume'])
+                else:
+                    open_p = float(row['Open'])
+                    high_p = float(row['High'])
+                    low_p = float(row['Low'])
+                    close_p = float(row['Close'])
+                    vol = float(row['Volume']) if 'Volume' in row else 0
+
                 candle = {
                     'from': int(idx.timestamp()),
                     'to': int(idx.timestamp()) + tf,
-                    'open': float(row['open']),
-                    'max': float(row['high']),
-                    'min': float(row['low']),
-                    'close': float(row['close']),
-                    'volume': float(row['volume']) if 'volume' in row else 0
+                    'open': open_p,
+                    'max': high_p,
+                    'min': low_p,
+                    'close': close_p,
+                    'volume': vol
                 }
                 candles.append(candle)
             if candles:
                 candles_cache.set(key, candles)
+                logger.info(f"✅ {pair}: جلبت {len(candles)} شمعة من yfinance")
             return candles
         return None
     except Exception as e:
-        logger.error(f"خطأ جلب شموع {pair} من TradingView: {e}")
+        logger.error(f"خطأ جلب شموع {pair} من yfinance: {e}")
         return None
 
 def get_cached_df(pair, tf, count):
@@ -5103,10 +5113,8 @@ def cleanup_memory():
 def get_pairs_for_today():
     day_of_week = datetime.now(CAIRO_TZ).weekday()
     if day_of_week in [5, 6]:
-        return [
-            "EURUSD-OTC", "GBPUSD-OTC", "USDJPY-OTC", "USDCHF-OTC",
-            "EURJPY-OTC", "EURGBP-OTC", "AUDCAD-OTC", "GBPJPY-OTC"
-        ], "OTC (عطلة)"
+        # يوم السبت والأحد: yfinance مش بيدعم OTC — نوقف البوت مؤقتاً
+        return [], "OTC (عطلة — لا يوجد بيانات)"
     else:
         return [
             "EURUSD", "GBPUSD", "USDJPY", "AUDUSD", "USDCAD", "USDCHF",
