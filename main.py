@@ -805,7 +805,7 @@ def send_cancelled_alert(pair, direction, reason, strategy_name):
     )
     send_telegram_message(msg)
 
-def send_final_signal(pair, direction, signal_name, score, duration_text, indicators, strategy_name, regime="unknown", signal_level=None, htf_data=None, indicator_counts=None):
+def send_final_signal(pair, direction, signal_name, score, duration_text, indicators, strategy_name, regime="unknown", signal_level=None, htf_data=None, indicator_counts=None, entry_price=None):
     da = "صعود (CALL)" if direction == "CALL" else "هبوط (PUT)"
     time_quality = get_time_quality(strategy_name)
     regime_badge = get_regime_badge(strategy_name, regime, htf_data, indicator_counts)
@@ -2757,7 +2757,7 @@ def analyze_pair_quantum(pair, timeframe="5m"):
         indicator_counts = get_indicator_counts(pair, df)
         final_signal = send_final_signal(
             pair, result['direction'], signal_name_ar, final_score,
-            duration_text, indicators_str, 'quantum', regime=regime, signal_level=level, htf_data=htf_data, indicator_counts=indicator_counts
+            duration_text, indicators_str, 'quantum', regime=regime, signal_level=level, htf_data=htf_data, indicator_counts=indicator_counts, entry_price=price
         )
         
         if final_signal is None:
@@ -3136,7 +3136,7 @@ def analyze_pair(pair, timeframe="5m"):
             htf_data = get_htf_market_regime(pair)
             final_signal = send_final_signal(
                 pair, potential_direction, signal_name_ar, score,
-                duration_text, indicators_str, 'original', regime=regime, signal_level=strength, htf_data=htf_data, indicator_counts=indicator_counts
+                duration_text, indicators_str, 'original', regime=regime, signal_level=strength, htf_data=htf_data, indicator_counts=indicator_counts, entry_price=curr['Close']
             )
 
             if final_signal is None:
@@ -3403,7 +3403,7 @@ def analyze_pair_king(pair, timeframe="5m"):
             htf_data = get_htf_market_regime(pair)
             final_signal = send_final_signal(
                 pair, potential_direction, signal_name_ar, score,
-                duration_text, indicators_str, 'king', regime=regime, htf_data=htf_data, indicator_counts=indicator_counts
+                duration_text, indicators_str, 'king', regime=regime, signal_level=strength, htf_data=htf_data, indicator_counts=indicator_counts, entry_price=curr['Close']
             )
             
             if final_signal is None:
@@ -3712,7 +3712,7 @@ def analyze_pair_smc(pair, timeframe="5m"):
         htf_data = get_htf_market_regime(pair)
         final_signal = send_final_signal(
             pair, bias, name, score,
-            duration_text, indicators_str, 'smart', regime=regime, htf_data=htf_data, indicator_counts=indicator_counts
+            duration_text, indicators_str, 'smart', regime=regime, htf_data=htf_data, indicator_counts=indicator_counts, entry_price=price
         )
 
         if final_signal is None:
@@ -3930,7 +3930,7 @@ def analyze_pair_pro(pair, timeframe="5m"):
         htf_data = get_htf_market_regime(pair)
         final_signal = send_final_signal(
             pair, direction, name_ar, score,
-            duration_text, indicators_str, 'pro', regime=regime, htf_data=htf_data, indicator_counts=indicator_counts
+            duration_text, indicators_str, 'pro', regime=regime, htf_data=htf_data, indicator_counts=indicator_counts, entry_price=curr['Close']
         )
         
         if final_signal is None:
@@ -4907,6 +4907,25 @@ def check_trade_results():
                     })
                 except Exception as e:
                     logger.error("خطأ في تسجيل الصفقة: " + str(e))
+
+                # إرسال نتيجة الصفقة مع سعر الدخول والخروج
+                result_emoji = "✅" if is_win else ("⚖️" if is_tie else "❌")
+                result_text = "ربح" if is_win else ("تعادل" if is_tie else "خسارة")
+                diff_val = fp - ep
+                diff_sign = "+" if diff_val >= 0 else ""
+                send_telegram_message(
+                    f"{result_emoji} *نتيجة الصفقة — {pair}*
+"
+                    f"الاتجاه: *{direction}* | الاستراتيجية: *{strategy}*
+"
+                    f"💰 *سعر الدخول:* `{ep:.5f}`
+"
+                    f"🏁 *سعر الخروج:* `{fp:.5f}`
+"
+                    f"📊 *الفرق:* `{diff_sign}{diff_val:.5f}` ({diff_sign}{diff_pct:.4f}%)
+"
+                    f"📈 *النتيجة:* *{result_text}*"
+                )
 
                 trades_to_remove.append(trade)
 
