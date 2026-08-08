@@ -1,7 +1,6 @@
 pandas
 numpy
 ta
-pandas-ta
 python-telegram-bot
 requests
 flask
